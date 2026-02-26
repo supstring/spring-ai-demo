@@ -1,0 +1,37 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: ai-data-analysis
+
+# ============ AI 配置 (Spring AI - OpenAI) ============
+# 用于数据分析和自然语言报告生成
+spring.ai:
+  openai:
+    api-key: ${OPENAI_API_KEY:your-openai-api-key}
+    chat:
+      options:
+        model: gpt-4o-mini
+        temperature: 0.3
+
+# ============ ClickHouse 配置 ============
+# 方式一：直接 JDBC 连接（当不使用 MCP 时）
+clickhouse:
+  url: jdbc:clickhouse://localhost:8123/default
+  username: ${CLICKHOUSE_USER:default}
+  password: ${CLICKHOUSE_PASSWORD:}
+
+# ============ MCP 配置 ============
+# 方式二：通过 MCP 调用 ClickHouse
+# ClickHouse MCP Server 通常以 STDIO 或 HTTP 方式运行
+# 若使用官方 mcp-clickhouse (Node.js)，需单独启动该进程
+app:
+  mcp:
+    enabled: ${MCP_ENABLED:false}
+    # STDIO 模式：指定 ClickHouse MCP 进程命令
+    clickhouse:
+      command: npx
+      args: -y, @clickhouse/mcp-server
+    # 或 HTTP/SSE 模式（若 MCP Server 暴露 HTTP 端点）
+    # http-url: http://localhost:3000/mcp

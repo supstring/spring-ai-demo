@@ -1,0 +1,9 @@
+# 开发环境配置示例
+spring.ai.openai.api-key: ${OPENAI_API_KEY}
+
+clickhouse:
+  url: jdbc:clickhouse://localhost:8123/default
+  username: default
+  password: ""
+
+app.mcp.enabled: false
