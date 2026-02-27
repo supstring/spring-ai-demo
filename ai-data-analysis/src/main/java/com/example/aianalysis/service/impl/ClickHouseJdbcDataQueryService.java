@@ -20,7 +20,7 @@ import java.util.Map;
  */
 @Slf4j
 @Service
-@ConditionalOnProperty(name = "app.mcp.enabled", havingValue = "false", matchIfMissing = true)
+@org.springframework.context.annotation.Primary
 public class ClickHouseJdbcDataQueryService implements DataQueryService {
 
     private final DataSource clickhouseDataSource;

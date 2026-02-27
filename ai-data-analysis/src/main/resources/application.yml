@@ -5,14 +5,16 @@ spring:
   application:
     name: ai-data-analysis
 
-# ============ AI 配置 (Spring AI - OpenAI) ============
+# ============ AI 配置 (Spring AI - DeepSeek) ============
 # 用于数据分析和自然语言报告生成
+# DeepSeek API 兼容 OpenAI 格式，使用自定义 base-url
 spring.ai:
   openai:
-    api-key: ${OPENAI_API_KEY:your-openai-api-key}
+    api-key: ${DEEPSEEK_API_KEY:sk-d9efc177c70e449ca3db031b0cc4ee70}
+    base-url: https://api.deepseek.com/v1
     chat:
       options:
-        model: gpt-4o-mini
+        model: deepseek-chat
         temperature: 0.3
 
 # ============ ClickHouse 配置 ============

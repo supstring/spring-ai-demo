@@ -1,5 +1,6 @@
 # 开发环境配置示例
-spring.ai.openai.api-key: ${OPENAI_API_KEY}
+spring.ai.openai.api-key: sk-d9efc177c70e449ca3db031b0cc4ee70
+spring.ai.openai.base-url: https://api.deepseek.com/v1
 
 clickhouse:
   url: jdbc:clickhouse://localhost:8123/default
