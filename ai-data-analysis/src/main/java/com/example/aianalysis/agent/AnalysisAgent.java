@@ -66,7 +66,7 @@ public class AnalysisAgent {
                     .build();
 
             SqlGenerationSkill.Output sqlOutput = sqlGenerationSkill.execute(sqlInput);
-            
+
             if (sqlOutput.getSql().isEmpty()) {
                 return AnalysisResult.builder()
                         .success(false)
@@ -84,22 +84,21 @@ public class AnalysisAgent {
                     .timeoutMs(30000)
                     .build();
 
-            McpSkillAdapter.McpQueryOutput queryOutput = mcpSkillAdapter
-                    .createQuerySkill()
-                    .execute(queryInput);
+            McpSkillAdapter.McpQueryOutput queryOutput = mcpSkillAdapter.createQuerySkill().execute(queryInput);
 
             if (!queryOutput.isSuccess()) {
                 return AnalysisResult.builder()
                         .success(false)
+                        .sql(sqlOutput.getSql())
                         .error("数据查询失败: " + queryOutput.getErrorMessage())
                         .build();
             }
 
             context.set("queryData", queryOutput.getData());
-            log.info("查询完成，返回 {} 条数据", queryOutput.getData().size());
+            log.info("查询到 {} 条数据", queryOutput.getRowCount());
 
             // ========== Step 3: 数据分析 ==========
-            log.info("Step 3: AI 数据分析");
+            log.info("Step 3: 分析数据");
             DataAnalysisSkill.Input analysisInput = DataAnalysisSkill.Input.builder()
                     .data(queryOutput.getData().toString())
                     .analysisType(request.getAnalysisType())
@@ -107,18 +106,18 @@ public class AnalysisAgent {
                     .build();
 
             DataAnalysisSkill.Output analysisOutput = dataAnalysisSkill.execute(analysisInput);
-            context.set("analysisResult", analysisOutput);
+            context.set("analysis", analysisOutput);
 
             // ========== Step 4: 报告生成 ==========
             log.info("Step 4: 生成报告");
             ReportGenerationSkill.Input reportInput = ReportGenerationSkill.Input.builder()
-                    .title(request.getReportTitle())
-                    .period(request.getPeriod())
-                    .summary("基于用户查询: " + request.getUserQuery())
-                    .data(queryOutput.getData().toString())
                     .analysis(analysisOutput.getAnalysisReport())
-                    .recommendations(String.join("\n", analysisOutput.getRecommendations()))
+                    .title(request.getReportTitle())
                     .format(request.getReportFormat())
+                    .period(request.getPeriod())
+                    .summary("AI 数据分析报告")
+                    .data(queryOutput.getData().toString())
+                    .recommendations(String.join("\n", analysisOutput.getRecommendations()))
                     .build();
 
             ReportGenerationSkill.Output reportOutput = reportGenerationSkill.execute(reportInput);

@@ -155,6 +155,10 @@ public class McpSkillAdapter {
         private List<Map<String, Object>> data;
         private long executionTimeMs;
         private String errorMessage;
+
+        public int getRowCount() {
+            return data != null ? data.size() : 0;
+        }
     }
 
     @Data

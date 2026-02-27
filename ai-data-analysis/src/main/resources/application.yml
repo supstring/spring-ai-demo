@@ -37,3 +37,23 @@ app:
       args: -y, @clickhouse/mcp-server
     # 或 HTTP/SSE 模式（若 MCP Server 暴露 HTTP 端点）
     # http-url: http://localhost:3000/mcp
+
+# ============ 麦当劳 MCP 配置 ============
+# 文档：https://open.mcd.cn/mcp/doc
+# 申请 Token：https://open.mcd.cn/mcp
+mcd:
+  mcp:
+    # MCP 服务地址
+    base-url: https://mcp.mcd.cn
+    # MCP Token（从 https://open.mcd.cn/mcp 申请）
+    token: ${MCD_MCP_TOKEN:n0JSIOHXJhbUvB0kDVvAvv3NS5m4E5Oz}
+  api:
+    # 开放平台 API 配置（用于直接调用 REST API）
+    # 环境：UAT（测试）或 PROD（生产）
+    env: ${MCD_API_ENV:PROD}
+    # 应用 ID（由麦当劳提供）
+    app-id: ${MCD_APP_ID:}
+    # 商户 ID（由麦当劳提供）
+    merchant-id: ${MCD_MERCHANT_ID:}
+    # 签名密钥（由麦当劳提供）
+    key: ${MCD_API_KEY:}
