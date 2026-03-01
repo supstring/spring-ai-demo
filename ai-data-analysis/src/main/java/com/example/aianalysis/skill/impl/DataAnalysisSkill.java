@@ -1,11 +1,12 @@
 package com.example.aianalysis.skill.impl;
 
+import com.example.aianalysis.config.AiClientRouter;
 import com.example.aianalysis.skill.Skill;
 import lombok.Builder;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -21,7 +22,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class DataAnalysisSkill implements Skill<DataAnalysisSkill.Input, DataAnalysisSkill.Output> {
 
-    private final ChatClient.Builder chatClientBuilder;
+    private final AiClientRouter aiClientRouter;
 
     @Override
     public String getName() {
@@ -38,20 +39,25 @@ public class DataAnalysisSkill implements Skill<DataAnalysisSkill.Input, DataAna
         return Map.of(
             "data", "要分析的数据，可以是 JSON 或表格格式",
             "analysisType", "分析类型：trend(趋势)、anomaly(异常检测)、comparison(对比分析)",
-            "context", "业务背景信息"
+            "context", "业务背景信息",
+            "provider", "可选：指定 AI 提供商，如 deepseek/openai/qwen",
+            "modelName", "可选：指定模型名或别名"
         );
     }
 
     @Override
     public Output execute(Input input) {
-        log.info("执行数据分析 Skill，类型: {}", input.getAnalysisType());
+        AiClientRouter.ResolvedTarget target = aiClientRouter.resolve(input.getProvider(), input.getModelName());
+        log.info("执行数据分析 Skill，类型: {}, provider: {}, 模型: {}",
+                input.getAnalysisType(), target.provider(), target.model());
 
         String prompt = buildAnalysisPrompt(input);
 
         try {
-            String analysis = chatClientBuilder.build()
+            String analysis = target.chatClient()
                     .prompt()
                     .user(prompt)
+                    .options(OpenAiChatOptions.builder().model(target.model()).build())
                     .call()
                     .content();
 
@@ -139,6 +145,8 @@ public class DataAnalysisSkill implements Skill<DataAnalysisSkill.Input, DataAna
         private String data;
         private String analysisType;
         private String context;
+        private String provider;
+        private String modelName;
     }
 
     /**

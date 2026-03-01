@@ -17,6 +17,41 @@ spring.ai:
         model: deepseek-chat
         temperature: 0.3
 
+# ============ 应用 AI 多 Provider 路由配置 ============
+# 支持不同 provider 使用不同 base-url / api-key / default-model
+# 可选保留 default-model 与 model-aliases 作为兼容旧逻辑的兜底配置
+app:
+  ai:
+    default-provider: deepseek
+    providers:
+      deepseek:
+        base-url: https://api.deepseek.com
+        api-key: ${DEEPSEEK_API_KEY:sk-d9efc177c70e449ca3db031b0cc4ee70}
+        default-model: deepseek-chat
+        model-aliases:
+          chat: deepseek-chat
+          reasoner: deepseek-reasoner
+      # openai:
+      #   base-url: https://api.openai.com
+      #   api-key: ${OPENAI_API_KEY:}
+      #   default-model: gpt-4o-mini
+      # qwen:
+      #   base-url: https://dashscope.aliyuncs.com/compatible-mode/v1
+      #   api-key: ${QWEN_API_KEY:}
+      #   default-model: qwen-plus
+    default-model: deepseek-chat
+    model-aliases:
+      deepseek: deepseek-chat
+      reasoner: deepseek-reasoner
+  mcp:
+    enabled: ${MCP_ENABLED:false}
+    # STDIO 模式：指定 ClickHouse MCP 进程命令
+    clickhouse:
+      command: npx
+      args: -y, @clickhouse/mcp-server
+    # 或 HTTP/SSE 模式（若 MCP Server 暴露 HTTP 端点）
+    # http-url: http://localhost:3000/mcp
+
 # ============ ClickHouse 配置 ============
 # 方式一：直接 JDBC 连接（当不使用 MCP 时）
 clickhouse:
@@ -28,15 +63,6 @@ clickhouse:
 # 方式二：通过 MCP 调用 ClickHouse
 # ClickHouse MCP Server 通常以 STDIO 或 HTTP 方式运行
 # 若使用官方 mcp-clickhouse (Node.js)，需单独启动该进程
-app:
-  mcp:
-    enabled: ${MCP_ENABLED:false}
-    # STDIO 模式：指定 ClickHouse MCP 进程命令
-    clickhouse:
-      command: npx
-      args: -y, @clickhouse/mcp-server
-    # 或 HTTP/SSE 模式（若 MCP Server 暴露 HTTP 端点）
-    # http-url: http://localhost:3000/mcp
 
 # ============ 麦当劳 MCP 配置 ============
 # 文档：https://open.mcd.cn/mcp/doc

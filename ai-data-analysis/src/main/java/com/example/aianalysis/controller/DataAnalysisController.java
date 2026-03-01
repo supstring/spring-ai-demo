@@ -42,4 +42,6 @@ public class DataAnalysisController {
                 DataAnalysisRequest.builder().dateColumn("date").build());
         return ResponseEntity.ok(response);
     }
+
+
 }

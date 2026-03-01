@@ -1,11 +1,12 @@
 package com.example.aianalysis.skill.impl;
 
+import com.example.aianalysis.config.AiClientRouter;
 import com.example.aianalysis.skill.Skill;
 import lombok.Builder;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
@@ -20,7 +21,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class SqlGenerationSkill implements Skill<SqlGenerationSkill.Input, SqlGenerationSkill.Output> {
 
-    private final ChatClient.Builder chatClientBuilder;
+    private final AiClientRouter aiClientRouter;
 
     @Override
     public String getName() {
@@ -37,7 +38,9 @@ public class SqlGenerationSkill implements Skill<SqlGenerationSkill.Input, SqlGe
         return Map.of(
             "naturalLanguageQuery", "自然语言描述的数据查询需求",
             "tableSchema", "表结构信息",
-            "databaseType", "数据库类型，如 clickhouse、mysql"
+            "databaseType", "数据库类型，如 clickhouse、mysql",
+            "provider", "可选：指定 AI 提供商，如 deepseek/openai/qwen",
+            "modelName", "可选：指定模型名或别名"
         );
     }
 
@@ -52,14 +55,17 @@ public class SqlGenerationSkill implements Skill<SqlGenerationSkill.Input, SqlGe
 
     @Override
     public Output execute(Input input) {
-        log.info("执行 SQL 生成 Skill，需求: {}", input.getNaturalLanguageQuery());
+        AiClientRouter.ResolvedTarget target = aiClientRouter.resolve(input.getProvider(), input.getModelName());
+        log.info("执行 SQL 生成 Skill，需求: {}, provider: {}, 模型: {}",
+                input.getNaturalLanguageQuery(), target.provider(), target.model());
 
         String prompt = buildPrompt(input);
 
         try {
-            String response = chatClientBuilder.build()
+            String response = target.chatClient()
                     .prompt()
                     .user(prompt)
+                    .options(OpenAiChatOptions.builder().model(target.model()).build())
                     .call()
                     .content();
 
@@ -159,6 +165,8 @@ public class SqlGenerationSkill implements Skill<SqlGenerationSkill.Input, SqlGe
         private String naturalLanguageQuery;
         private String tableSchema;
         private String databaseType;
+        private String provider;
+        private String modelName;
     }
 
     /**

@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI SSE 流式测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 24px;
+            max-width: 960px;
+        }
+
+        h1 {
+            margin-bottom: 16px;
+        }
+
+        .row {
+            margin-bottom: 12px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 600;
+        }
+
+        input, textarea, button {
+            width: 100%;
+            box-sizing: border-box;
+            font-size: 14px;
+            padding: 10px;
+        }
+
+        textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .inline {
+            display: flex;
+            gap: 12px;
+        }
+
+        .inline .col {
+            flex: 1;
+        }
+
+        button {
+            cursor: pointer;
+            width: 160px;
+        }
+    </style>
+</head>
+<body>
+<h1>AI SSE 流式输出测试</h1>
+
+<div class="row">
+    <label for="problem">问题输入</label>
+    <textarea id="problem" placeholder="请输入你要提问的问题"></textarea>
+</div>
+
+<div class="row inline">
+    <div class="col">
+        <label for="provider">Provider（可选）</label>
+        <input id="provider" type="text" placeholder="例如: deepseek">
+    </div>
+    <div class="col">
+        <label for="modelName">Model（可选）</label>
+        <input id="modelName" type="text" placeholder="例如: deepseek-chat / reasoner">
+    </div>
+</div>
+
+<div class="row">
+    <button id="submitBtn" type="button">提交问题</button>
+</div>
+
+<div class="row">
+    <label for="answer">流式输出</label>
+    <textarea id="answer" readonly placeholder="模型流式输出会显示在这里"></textarea>
+</div>
+
+<script>
+    const problemInput = document.getElementById("problem");
+    const providerInput = document.getElementById("provider");
+    const modelInput = document.getElementById("modelName");
+    const submitBtn = document.getElementById("submitBtn");
+    const answerBox = document.getElementById("answer");
+
+    let source = null;
+
+    function closeSource() {
+        if (source) {
+            source.close();
+            source = null;
+        }
+    }
+
+    submitBtn.addEventListener("click", function () {
+        const problem = problemInput.value.trim();
+        const provider = providerInput.value.trim();
+        const modelName = modelInput.value.trim();
+
+        if (!problem) {
+            alert("请先输入问题");
+            return;
+        }
+
+        closeSource();
+        answerBox.value = "";
+        submitBtn.disabled = true;
+
+        const params = new URLSearchParams();
+        params.set("problem", problem);
+        if (provider) {
+            params.set("provider", provider);
+        }
+        if (modelName) {
+            params.set("modelName", modelName);
+        }
+
+        source = new EventSource("/api/test/simple-ask/stream?" + params.toString());
+
+        source.addEventListener("message", function (event) {
+            answerBox.value += event.data;
+            answerBox.scrollTop = answerBox.scrollHeight;
+        });
+
+        source.addEventListener("error", function (event) {
+            answerBox.value += "\n\n[连接异常或结束]";
+            closeSource();
+            submitBtn.disabled = false;
+        });
+
+        source.addEventListener("done", function () {
+            closeSource();
+            submitBtn.disabled = false;
+        });
+    });
+</script>
+</body>
+</html>

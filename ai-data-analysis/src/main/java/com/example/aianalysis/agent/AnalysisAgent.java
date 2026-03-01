@@ -63,6 +63,8 @@ public class AnalysisAgent {
                     .naturalLanguageQuery(request.getUserQuery())
                     .tableSchema(request.getTableSchema())
                     .databaseType("clickhouse")
+                    .provider(request.getProvider())
+                    .modelName(request.getModelName())
                     .build();
 
             SqlGenerationSkill.Output sqlOutput = sqlGenerationSkill.execute(sqlInput);
@@ -103,6 +105,8 @@ public class AnalysisAgent {
                     .data(queryOutput.getData().toString())
                     .analysisType(request.getAnalysisType())
                     .context(request.getBusinessContext())
+                    .provider(request.getProvider())
+                    .modelName(request.getModelName())
                     .build();
 
             DataAnalysisSkill.Output analysisOutput = dataAnalysisSkill.execute(analysisInput);
@@ -182,6 +186,8 @@ public class AnalysisAgent {
                                     .data(output.getData().toString())
                                     .analysisType(request.getAnalysisType())
                                     .context(request.getBusinessContext())
+                                    .provider(request.getProvider())
+                                    .modelName(request.getModelName())
                                     .build();
                         })
                         .build())
@@ -196,6 +202,8 @@ public class AnalysisAgent {
                 SqlGenerationSkill.Input.builder()
                         .naturalLanguageQuery(request.getUserQuery())
                         .tableSchema(request.getTableSchema())
+                        .provider(request.getProvider())
+                        .modelName(request.getModelName())
                         .build(),
                 context);
 
@@ -247,6 +255,8 @@ public class AnalysisAgent {
         private String reportTitle;         // 报告标题
         private String period;              // 数据周期
         private String reportFormat;        // 报告格式: json, markdown, html
+        private String provider;            // 可选：指定 AI 提供商
+        private String modelName;           // 可选：指定模型名或别名
         private String sessionId;           // 会话 ID
         private String userId;              // 用户 ID
     }

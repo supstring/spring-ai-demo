@@ -1,11 +1,12 @@
 package com.example.aianalysis.service;
 
+import com.example.aianalysis.config.AiClientRouter;
 import com.example.aianalysis.dto.DataAnalysisRequest;
 import com.example.aianalysis.dto.DataAnalysisResponse;
 import com.example.aianalysis.dto.DataAnalysisResponse.MetricChange;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -23,7 +24,7 @@ import java.util.Map;
 public class DataAnalysisService {
 
     private final DataQueryService dataQueryService;
-    private final ChatClient.Builder chatClientBuilder;
+    private final AiClientRouter aiClientRouter;
 
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ISO_LOCAL_DATE;
 
@@ -36,7 +37,9 @@ public class DataAnalysisService {
             Map<String, Object> dayBeforeData = dataQueryService.queryDataSummary(dayBefore, request);
 
             List<MetricChange> changes = computeMetricChanges(yesterdayData, dayBeforeData);
-            String analysisReport = generateAnalysisReport(yesterday, dayBefore, yesterdayData, dayBeforeData, changes);
+            String analysisReport = generateAnalysisReport(
+                    yesterday, dayBefore, yesterdayData, dayBeforeData, changes,
+                    request.getProvider(), request.getModelName());
 
             return DataAnalysisResponse.builder()
                     .success(true)
@@ -84,7 +87,10 @@ public class DataAnalysisService {
 
     private String generateAnalysisReport(String yesterday, String dayBefore,
                                           Map<String, Object> yesterdayData, Map<String, Object> dayBeforeData,
-                                          List<MetricChange> changes) {
+                                          List<MetricChange> changes,
+                                          String requestedProvider,
+                                          String requestedModel) {
+        AiClientRouter.ResolvedTarget target = aiClientRouter.resolve(requestedProvider, requestedModel);
         String prompt = """
                 请根据以下数据，用简洁的中文写一段「昨天相对于前天的数据变化分析」报告（2-5句话）：
                 - 昨天(%s)数据：%s
@@ -93,9 +99,10 @@ public class DataAnalysisService {
                 """.formatted(yesterday, yesterdayData, dayBefore, dayBeforeData, changes);
 
         try {
-            return chatClientBuilder.build()
+            return target.chatClient()
                     .prompt()
                     .user(prompt)
+                    .options(OpenAiChatOptions.builder().model(target.model()).build())
                     .call()
                     .content();
         } catch (Exception e) {

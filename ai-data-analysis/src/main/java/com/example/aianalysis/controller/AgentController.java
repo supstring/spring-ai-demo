@@ -46,7 +46,9 @@ public class AgentController {
      *   "userQuery": "查询昨天各渠道的用户注册量",
      *   "tableSchema": "表名: users, 字段: id, channel, created_at",
      *   "analysisType": "trend",
-     *   "reportFormat": "markdown"
+     *   "reportFormat": "markdown",
+     *   "provider": "deepseek",
+     *   "modelName": "deepseek"
      * }
      */
     @PostMapping("/analyze")
