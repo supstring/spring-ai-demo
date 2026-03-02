@@ -26,12 +26,30 @@ public class AiClientRouter {
     private final ChatClient.Builder defaultChatClientBuilder;
 
     private final Map<String, ChatClient> clientCache = new ConcurrentHashMap<>();
+    private final Map<String, ChatClient> dynamicClientCache = new ConcurrentHashMap<>();
 
     public ResolvedTarget resolve(String requestedProvider, String requestedModel) {
         String provider = aiModelProperties.resolveProvider(requestedProvider);
         String model = aiModelProperties.resolveModel(provider, requestedModel);
         ChatClient chatClient = resolveClient(provider);
         return new ResolvedTarget(provider, model, chatClient);
+    }
+
+    public ResolvedTarget resolve(String requestedProvider, String requestedModel, String dynamicBaseUrl, String dynamicApiKey) {
+        boolean hasBaseUrl = StringUtils.hasText(dynamicBaseUrl);
+        boolean hasApiKey = StringUtils.hasText(dynamicApiKey);
+        if (hasBaseUrl || hasApiKey) {
+            if (!hasBaseUrl || !hasApiKey) {
+                throw new IllegalArgumentException("当传入动态模型配置时，baseUrl 和 apiKey 必须同时提供");
+            }
+            String provider = StringUtils.hasText(requestedProvider) ? requestedProvider.trim() : "dynamic";
+            String model = StringUtils.hasText(requestedModel)
+                    ? requestedModel.trim()
+                    : aiModelProperties.resolveModel(aiModelProperties.resolveProvider(requestedProvider), null);
+            ChatClient chatClient = resolveDynamicClient(dynamicBaseUrl.trim(), dynamicApiKey.trim(), model);
+            return new ResolvedTarget(provider, model, chatClient);
+        }
+        return resolve(requestedProvider, requestedModel);
     }
 
     private ChatClient resolveClient(String provider) {
@@ -51,13 +69,40 @@ public class AiClientRouter {
             throw new IllegalArgumentException("AI provider 配置不完整: " + provider + "，请检查 base-url/api-key");
         }
 
-        OpenAiApi openAiApi = new OpenAiApi(config.getBaseUrl(), config.getApiKey());
+        OpenAiApi openAiApi = new OpenAiApi.Builder()
+                .baseUrl(config.getBaseUrl())
+                .apiKey(config.getApiKey())
+                .build();
         OpenAiChatOptions defaultOptions = OpenAiChatOptions.builder()
                 .model(aiModelProperties.resolveModel(provider, null))
                 .build();
-        OpenAiChatModel chatModel = new OpenAiChatModel(openAiApi, defaultOptions);
+        OpenAiChatModel chatModel = OpenAiChatModel.builder()
+                .openAiApi(openAiApi)
+                .defaultOptions(defaultOptions)
+                .build();
 
         log.info("初始化 AI Provider 客户端: {}", provider);
+        return ChatClient.create(chatModel);
+    }
+
+    private ChatClient resolveDynamicClient(String baseUrl, String apiKey, String model) {
+        String cacheKey = baseUrl + "|" + apiKey + "|" + model;
+        return dynamicClientCache.computeIfAbsent(cacheKey, ignored -> createDynamicClient(baseUrl, apiKey, model));
+    }
+
+    private ChatClient createDynamicClient(String baseUrl, String apiKey, String model) {
+        OpenAiApi openAiApi = new OpenAiApi.Builder()
+                .baseUrl(baseUrl)
+                .apiKey(apiKey)
+                .build();
+        OpenAiChatOptions defaultOptions = OpenAiChatOptions.builder()
+                .model(model)
+                .build();
+        OpenAiChatModel chatModel = OpenAiChatModel.builder()
+                .openAiApi(openAiApi)
+                .defaultOptions(defaultOptions)
+                .build();
+        log.info("初始化动态 AI 客户端, baseUrl: {}, model: {}", baseUrl, model);
         return ChatClient.create(chatModel);
     }
 

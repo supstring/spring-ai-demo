@@ -16,6 +16,16 @@ spring.ai:
       options:
         model: deepseek-chat
         temperature: 0.3
+  mcp:
+    client:
+      enabled: true
+      type: SYNC
+      toolcallback:
+        enabled: true
+      sse:
+        connections:
+          mediation-report:
+            url: ${MEDIATION_MCP_SSE_URL:http://localhost:10014/sse}
 
 # ============ 应用 AI 多 Provider 路由配置 ============
 # 支持不同 provider 使用不同 base-url / api-key / default-model

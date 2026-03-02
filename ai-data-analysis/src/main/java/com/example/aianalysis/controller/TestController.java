@@ -16,12 +16,12 @@ import reactor.core.publisher.Flux;
 @RequiredArgsConstructor
 public class TestController {
 
-    private final TestService testSer;
+    private final TestService testService;
 
 
     @PostMapping(value = "/simple-ask", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<String> simpleAsk(@RequestBody(required = false) @Valid SimpleAskRequest request) {
-        String response = testSer.simpleAsk(request);
+        String response = testService.simpleAsk(request);
         return ResponseEntity.ok(response);
     }
 
@@ -33,7 +33,7 @@ public class TestController {
                     .data("problem 不能为空")
                     .build());
         }
-        return testSer.simpleAskStream(request)
+        return testService.simpleAskStream(request)
                 .map(chunk -> ServerSentEvent.<String>builder()
                         .event("message")
                         .data(chunk)
@@ -42,6 +42,12 @@ public class TestController {
                         .event("done")
                         .data("[DONE]")
                         .build()));
+    }
+
+    @PostMapping(value = "/ask-with-mcp", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<String> askWithMcp(@RequestBody(required = false) @Valid SimpleAskRequest request) {
+        String response = testService.askWithMcp(request);
+        return ResponseEntity.ok(response);
     }
 
 }

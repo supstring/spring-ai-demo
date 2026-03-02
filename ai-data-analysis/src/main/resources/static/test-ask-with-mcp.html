@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ask With MCP 测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 24px;
+            max-width: 980px;
+        }
+
+        h1 {
+            margin-bottom: 16px;
+        }
+
+        .row {
+            margin-bottom: 12px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 600;
+        }
+
+        input, textarea, button {
+            width: 100%;
+            box-sizing: border-box;
+            font-size: 14px;
+            padding: 10px;
+        }
+
+        textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .inline {
+            display: flex;
+            gap: 12px;
+        }
+
+        .inline .col {
+            flex: 1;
+        }
+
+        .actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .actions button {
+            width: 180px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+<h1>问答（可触发 MCP）测试页</h1>
+
+<div class="row">
+    <label for="problem">问题</label>
+    <textarea id="problem" placeholder="例如：昨天 AU 国家 BigoDsp 的收益是多少"></textarea>
+</div>
+
+<div class="row inline">
+    <div class="col">
+        <label for="sessionId">Session ID（建议固定）</label>
+        <input id="sessionId" type="text" placeholder="例如: demo-session-001">
+    </div>
+    <div class="col">
+        <label for="provider">Provider（可选）</label>
+        <input id="provider" type="text" placeholder="例如: deepseek">
+    </div>
+    <div class="col">
+        <label for="modelName">Model（可选）</label>
+        <input id="modelName" type="text" placeholder="例如: deepseek-chat">
+    </div>
+</div>
+<div class="row inline">
+    <div class="col">
+        <label for="baseUrl">baseUrl（可选，动态指定）</label>
+        <input id="baseUrl" type="text" placeholder="例如: https://api.deepseek.com">
+    </div>
+    <div class="col">
+        <label for="apiKey">apiKey（可选，动态指定）</label>
+        <input id="apiKey" type="password" placeholder="例如: sk-xxxx">
+    </div>
+</div>
+
+<div class="row actions">
+    <button id="askBtn" type="button">调用 /api/test/ask-with-mcp</button>
+    <button id="fillBtn" type="button">填充示例问题</button>
+</div>
+
+<div class="row">
+    <label for="answer">回答</label>
+    <textarea id="answer" readonly placeholder="模型返回内容"></textarea>
+</div>
+
+<div class="row">
+    <label for="debug">调试信息（请求/响应）</label>
+    <textarea id="debug" readonly placeholder="请求体和HTTP结果"></textarea>
+</div>
+
+<script>
+    const problemInput = document.getElementById("problem");
+    const sessionIdInput = document.getElementById("sessionId");
+    const providerInput = document.getElementById("provider");
+    const modelInput = document.getElementById("modelName");
+    const baseUrlInput = document.getElementById("baseUrl");
+    const apiKeyInput = document.getElementById("apiKey");
+    const askBtn = document.getElementById("askBtn");
+    const fillBtn = document.getElementById("fillBtn");
+    const answerBox = document.getElementById("answer");
+    const debugBox = document.getElementById("debug");
+
+    fillBtn.addEventListener("click", function () {
+        problemInput.value = "昨天 AU 国家 BigoDsp 的收益是多少";
+    });
+
+    if (!sessionIdInput.value) {
+        sessionIdInput.value = "session-" + Date.now();
+    }
+
+    askBtn.addEventListener("click", async function () {
+        const problem = problemInput.value.trim();
+        const sessionId = sessionIdInput.value.trim();
+        const provider = providerInput.value.trim();
+        const modelName = modelInput.value.trim();
+        const baseUrl = baseUrlInput.value.trim();
+        const apiKey = apiKeyInput.value.trim();
+
+        if (!problem) {
+            alert("请先输入问题");
+            return;
+        }
+
+        const payload = { problem: problem };
+        if (sessionId) {
+            payload.sessionId = sessionId;
+        }
+        if (provider) {
+            payload.provider = provider;
+        }
+        if (modelName) {
+            payload.modelName = modelName;
+        }
+        if (baseUrl) {
+            payload.baseUrl = baseUrl;
+        }
+        if (apiKey) {
+            payload.apiKey = apiKey;
+        }
+
+        const debugPayload = { ...payload };
+        if (debugPayload.apiKey) {
+            debugPayload.apiKey = "***masked***";
+        }
+
+        askBtn.disabled = true;
+        answerBox.value = "";
+        debugBox.value = "请求中...\n\n请求体:\n" + JSON.stringify(debugPayload, null, 2);
+
+        try {
+            const response = await fetch("/api/test/ask-with-mcp", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
+
+            const text = await response.text();
+            answerBox.value = text;
+            debugBox.value += "\n\nHTTP状态: " + response.status + "\n响应体:\n" + text;
+        } catch (e) {
+            answerBox.value = "请求失败";
+            debugBox.value += "\n\n请求异常: " + e;
+        } finally {
+            askBtn.disabled = false;
+        }
+    });
+</script>
+</body>
+</html>
