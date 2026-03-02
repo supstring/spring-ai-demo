@@ -113,7 +113,29 @@ mvn spring-boot:run
 
 ---
 
-## 6. `query_mediation_report` 工具规则
+## 6. MCP 工具规则
+
+当前提供 3 个工具，推荐按顺序调用：
+
+1. `get_mediation_metadata`：获取字段说明、枚举值、推荐调用流程
+2. `resolve_mediation_filters`：把自然语言过滤条件解析为标准参数（如 `appName -> appKey`、`Banner -> adType=2`）
+3. `query_mediation_report`：使用标准参数查询报表
+
+### 6.1 `resolve_mediation_filters`（新增）
+
+适用场景：
+
+- 用户输入的是业务名称/文案，而不是系统标准值
+- 示例：
+  - 应用名称 `name1` -> 先查 MySQL 映射为 `appKey`
+  - `adType=Banner` -> 映射为 `adType=2`
+
+SQL 可在 `mediation-report-mcp-server/src/main/resources/application.yml` 中配置：
+
+- `app.lookup.app-key-by-name-sql`
+- `app.lookup.app-key-by-pkg-sql`
+
+### 6.2 `query_mediation_report`
 
 工具调用时遵循：
 

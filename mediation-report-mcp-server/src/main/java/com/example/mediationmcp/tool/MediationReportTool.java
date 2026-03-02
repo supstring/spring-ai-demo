@@ -38,6 +38,8 @@ public class MediationReportTool {
 支持按国家、开发者、DSP、广告类型等维度分组，支持趋势分析和分页查询。
 
 参数字段说明请参考请求对象 MediationReportQueryRequest。
+若用户输入的是业务名称或文案（如应用名、Banner），应先调用 get_mediation_metadata 与 resolve_mediation_filters，
+再将解析后的标准值（如 appKey、adType）传入本工具。
 
 ==============================
 指标字段说明（indicators）

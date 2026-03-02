@@ -35,7 +35,7 @@ public class MediationReportQueryRequest {
 
     @JsonPropertyDescription("广告位 ID 过滤")
     private List<String> slotId;
-    @JsonPropertyDescription("广告类型过滤")
+    @JsonPropertyDescription("广告类型过滤。可选值：1=Native，2=Banner")
     private List<Integer> adType;
     @JsonPropertyDescription("国家过滤，例如 AU、US")
     private List<String> country;

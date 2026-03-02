@@ -11,8 +11,11 @@ spring:
         version: 1.0.0
         protocol: SSE
         instructions: |
-          This MCP server provides query_mediation_report for mediation developer report querying.
-          Always provide time range and at least one indicator.
+          This MCP server provides:
+          1) get_mediation_metadata: get enum/field metadata and workflow guidance.
+          2) resolve_mediation_filters: resolve natural language filters (e.g. appName->appKey, Banner->adType=2).
+          3) query_mediation_report: query report data with standardized filter values.
+          Always provide time range and at least one indicator for query_mediation_report.
           Default pageNo=1, pageSize=20, aggregateType=2 when user does not specify.
         type: SYNC
         sse-endpoint: /sse
@@ -22,3 +25,14 @@ app:
   backend:
     base-url: http://202.168.108.109:10013
     report-path: /mediation/report/sdk_developer_list_new
+  lookup:
+    app-key-by-name-sql: SELECT app_key FROM mediation_app WHERE app_name = ?
+    app-key-by-pkg-sql: SELECT app_key FROM mediation_app WHERE pkg_name = ?
+
+# Configure datasource when you need DB-backed filter resolution.
+# spring:
+#   datasource:
+#     url: jdbc:mysql://127.0.0.1:3306/your_db?useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC
+#     username: your_user
+#     password: your_password
+#     driver-class-name: com.mysql.cj.jdbc.Driver
