@@ -36,6 +36,7 @@ public class MediationReportTool {
 用于查询广告聚合平台的开发者维度报表数据。
 适用于广告收入、ecpm、请求量、展示量、点击量等指标的统计分析。
 支持按国家、开发者、DSP、广告类型等维度分组，支持趋势分析和分页查询。
+分析「某日某范围数据为何下降」时，可先查整体再通过 breakDowns 下钻（如 dspName、adType、developerId、appKey）找出下降较多的子维度。
 
 参数字段说明请参考请求对象 MediationReportQueryRequest。
 
